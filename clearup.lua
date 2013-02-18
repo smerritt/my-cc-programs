@@ -39,7 +39,13 @@ function eat_up(how_far)
     sleep(0.1)
   end
   for i=1,how_far-1 do
-    turtle.down()
+    -- the turtle doesn't always make it down,
+    -- even if there's clear air. lag?
+    ret = turtle.down()
+    if not ret then
+      sleep(0.1)
+      turtle.down()
+    end
   end
 end
 
@@ -50,7 +56,13 @@ function eat_row(depth, height)
     eat_up(height-1)
   end
   for i=1,depth do
-    turtle.back()
+    -- lag makes this loop not always work, perhaps?
+    -- certainly something breaks it
+    ret = turtle.back()
+    if not ret then
+      sleep(0.1)
+      turtle.back()
+    end
   end
 end
 
@@ -66,7 +78,7 @@ function eat_room(width, depth, height)
     turtle.turnLeft()
     eat_up(height-1)
   end
-  eat_row()
+  eat_row(depth-1, height)
 
   -- do a little dance
   turtle.up()
