@@ -70,7 +70,7 @@ function eat_room(width, depth, height)
   turtle.dig()
   turtle.forward()
   eat_up(height-1)
-  for i=1,width do
+  for i=1,width-1 do
     eat_row(depth-1, height)
     turtle.turnRight()
     turtle.dig()
