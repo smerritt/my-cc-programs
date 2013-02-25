@@ -28,7 +28,7 @@ shell.run("floor", box_width, box_depth) -- moves turtle up 1
 
 -- get back in the box
 util.back()
-util.down(wall_height)
+util.down(wall_height+1)
 turtle.turnRight()
 util.forward()
 turtle.turnLeft()
