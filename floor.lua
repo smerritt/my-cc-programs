@@ -6,6 +6,8 @@ local args = { ... }
 floor_width = tonumber(args[1])
 floor_depth = tonumber(args[2])
 
+loadfile("util")()
+
 -- selects the first slot with stuff in it
 -- returns true if it found stuff, false otherwise
 function select_filled_slot()
@@ -60,6 +62,9 @@ function lay_floor(width, depth)
     turtle.turnLeft()
   end
   lay_line(depth)
+  turtle.turnLeft()
+  util.forward(width-1)
+  turtle.turnRight()
 end
 
 lay_floor(floor_width, floor_depth)
