@@ -3,6 +3,8 @@ clearup.lua
 craft.lua
 floor.lua
 lavahoover.lua
+lumberjack.lua
+minedown.lua
 mineplus.lua
 stripmine.lua
 util.lua
