@@ -121,4 +121,60 @@ function util.down(n)
   end
 end
 
+
+-- ingest the block in front of the turtle. if it's lava, eat it.
+-- requires a bucket in a slot, which defaults to 1.
+--
+-- may change the selected slot.
+function util.ingest(bucket_slot)
+  bucket_slot = bucket_slot or 1
+  if turtle.detect() then
+    -- solid block: dig it!
+    --
+    -- I have seen this get stuck when mining underwater, hence the limit
+    -- something to do with flowing water blocks, maybe? it's weird.
+    for i=1,10 do
+      -- dig a bunch 
+      if not (turtle.detect() and turtle.dig()) then break end
+    end
+  else
+    -- turtle.detect() returns false for air, lava, and water, so try
+    -- to eat it with a bucket
+    turtle.select(bucket_slot)
+    if turtle.place() then
+      -- lava or water
+      if not turtle.refuel() then
+        -- looks like it was water; put it back (not that I care about
+        -- preserving water; it's just that I want the empty bucket back)
+        turtle.place()
+      end
+    end
+  end
+end
+
+-- ingest the block under the turtle. if it's lava, eat it. requires a
+-- bucket in a slot, which defaults to 1.
+--
+-- may change the selected slot.
+function util.ingestDown(bucket_slot)
+  bucket_slot = bucket_slot or 1
+  if turtle.detectDown() then
+    -- solid block: dig it!
+    turtle.digDown()
+  else
+    -- turtle.detect() returns false for air, lava, and water, so try
+    -- to eat it with a bucket
+    turtle.select(bucket_slot)
+    if turtle.placeDown() then
+      -- lava or water
+      if not turtle.refuel() then
+        -- looks like it was water; put it back
+        turtle.placeDown()
+      end
+    end
+  end
+end
+
+
 return util
+
