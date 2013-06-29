@@ -7,5 +7,6 @@ lumberjack.lua
 minedown.lua
 mineplus.lua
 stripmine.lua
+spiralmine.lua
 util.lua
 wall.lua
