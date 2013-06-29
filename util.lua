@@ -176,5 +176,90 @@ function util.ingestDown(bucket_slot)
 end
 
 
+-- find an empty slot
+-- returns slot number
+function util.find_empty_slot()
+  for slot in 1,16 do
+    if turtle.getItemCount(slot) == 0 then
+      return slot
+    end
+  end
+end
+
+-- refuel via bucket-chest system
+-- will block waiting for buckets
+--
+-- requires air above the turtle for chest placement
+function util.refuel_from_chests(empty_bucket_chest_slot,
+                                 full_bucket_chest_slot,
+                                 empty_slot_for_bucket)
+  -- put down the chest with the full lava buckets
+  turtle.select(full_bucket_chest_slot)
+  if not turtle.placeUp() then
+    error("refuel_from_chests: Error placing full-bucket chest above!")
+  end
+
+  -- pull a lava bucket into the empty slot
+  if turtle.getItemCount(empty_slot_for_bucket) > 0 then
+    error("refuel_from_chests: Slot " .. tostring(empty_slot_for_bucket) .. " is not empty!")
+  end
+  turtle.select(empty_slot_for_bucket)
+  
+  tries = 0
+  while not turtle.suckUp() do
+    print("Couldn't pull from inventory above; waiting (try " .. 
+          tostring(tries) .. ")")
+    tries += 1
+  end
+
+  -- eat the bucket
+  if not turtle.refuel() then
+    error("refuel_from_chests: Got a non-fuel item from inventory above? WTF?")
+  end
+
+  -- send the empty bucket on its way
+  turtle.select(full_bucket_chest_slot)
+  if not turtle.digUp() then
+    error("refuel_from_chests: Error retrieving full-bucket chest above!")
+  end
+
+  turtle.select(empty_bucket_chest_slot)
+  if not turtle.placeUp() then
+    error("refuel_from_chests: Error placing empty-bucket chest above!")
+  end
+  
+  turtle.select(empty_slot_for_bucket)  -- kind of a misnomer at this point
+  tries = 0
+  while not turtle.dropUp() do
+    print("Couldn't put bucket into inventory above; waiting (try " .. 
+          tostring(tries) .. ")")
+    tries += 1
+  end
+
+  turtle.select(empty_bucket_chest_slot)
+  if not turtle.digUp() then
+    error("refuel_from_chests: Error retrieving empty-bucket chest above!")
+  end
+end
+
+
+-- unload items in <slot> into an inventory above the turtle,
+-- will block if inventory is full.
+--
+-- NB: may change selected slot
+function util.unloadUp(slot)
+  if turtle.getItemCount(slot) == 0 then
+    return true
+  end
+
+  turtle.select(slot)
+  turtle.dropUp()
+  while turtle.getItemCount(slot) > 0 do
+    turtle.dropUp()
+    print("Waiting for space in inventory above")
+    sleep(8.1)
+  end
+end
+
 return util
 
