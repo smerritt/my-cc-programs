@@ -6,6 +6,7 @@ lavahoover.lua
 lumberjack.lua
 minedown.lua
 mineplus.lua
+stairs.lua
 stripmine.lua
 spiralmine.lua
 util.lua
