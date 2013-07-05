@@ -41,16 +41,10 @@ end
 function lay_line(length)
   for i=1,length-1 do
     place_below()
-    turtle.forward()
+    util.forward()
   end
   place_below()
-  for i=1,length-1 do
-    ret = turtle.back()
-    if not ret then
-      sleep(0.1)
-      turtle.back()
-    end
-  end
+  util.back(length-1)
 end
 
 function lay_floor(width, depth)
@@ -58,7 +52,7 @@ function lay_floor(width, depth)
   for i=1,width-1 do
     lay_line(depth) 
     turtle.turnRight()
-    turtle.forward()
+    util.forward()
     turtle.turnLeft()
   end
   lay_line(depth)

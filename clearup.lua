@@ -16,6 +16,8 @@ box_width = tonumber(args[1])
 box_depth = tonumber(args[2])
 box_height = tonumber(args[3])
 
+loadfile("util")()
+
 function debug(text)
   -- comment out to silence
   print(text)
@@ -32,49 +34,33 @@ function eat_up(how_far)
       turtle.digUp()
       sleep(0.1)
     end
-    turtle.up()
+    util.up()
   end
   while turtle.detectUp() do
     turtle.digUp()
     sleep(0.1)
   end
-  for i=1,how_far-1 do
-    -- the turtle doesn't always make it down,
-    -- even if there's clear air. lag?
-    ret = turtle.down()
-    if not ret then
-      sleep(0.1)
-      turtle.down()
-    end
-  end
+  util.down(how_far-1)
 end
 
 function eat_row(depth, height)
   for i=1,depth do
     turtle.dig()
-    turtle.forward()
+    util.forward()
     eat_up(height-1)
   end
-  for i=1,depth do
-    -- lag makes this loop not always work, perhaps?
-    -- certainly something breaks it
-    ret = turtle.back()
-    if not ret then
-      sleep(0.1)
-      turtle.back()
-    end
-  end
+  util.back(depth)
 end
 
 function eat_room(width, depth, height)
   turtle.dig()
-  turtle.forward()
+  util.forward()
   eat_up(height-1)
   for i=1,width-1 do
     eat_row(depth-1, height)
     turtle.turnRight()
     turtle.dig()
-    turtle.forward()
+    util.forward()
     turtle.turnLeft()
     eat_up(height-1)
   end
@@ -88,9 +74,7 @@ function eat_room(width, depth, height)
   turtle.down()
 
   turtle.turnLeft()
-  for i=1,width-1 do
-    turtle.forward()
-  end
+  util.forward(width-1)
   turtle.turnRight()
   turtle.back()
 end
