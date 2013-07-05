@@ -209,7 +209,7 @@ function util.refuel_from_chests(empty_bucket_chest_slot,
   while not turtle.suckUp() do
     print("Couldn't pull from inventory above; waiting (try " .. 
           tostring(tries) .. ")")
-    tries += 1
+    tries = tries + 1
   end
 
   -- eat the bucket
@@ -233,7 +233,7 @@ function util.refuel_from_chests(empty_bucket_chest_slot,
   while not turtle.dropUp() do
     print("Couldn't put bucket into inventory above; waiting (try " .. 
           tostring(tries) .. ")")
-    tries += 1
+    tries = tries + 1
   end
 
   turtle.select(empty_bucket_chest_slot)
