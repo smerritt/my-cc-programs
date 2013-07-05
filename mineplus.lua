@@ -4,7 +4,6 @@
 loadfile("util")()
 
 bucket_slot = 1
-enderchest_slot = 2
 
 function debug(msg)
   print(msg)
