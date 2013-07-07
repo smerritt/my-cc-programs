@@ -9,19 +9,23 @@ function debug(msg)
   print(msg)
 end
 
+function munchAround(bucket_slot)
+  for i=1,4 do
+    util.ingest(bucket_slot)
+    turtle.turnRight()
+  end
+end
+
 function munch()
+  munchAround(bucket_slot)
   util.ingestDown(bucket_slot)
 
   wentDown = turtle.down()
   if not wentDown then
+    munchAround(bucket_slot)
     -- probably bedrock
     print("done; returning to surface")
     return
-  end
-
-  for i=1,4 do
-    util.ingest(bucket_slot)
-    turtle.turnRight()
   end
 
   -- as grows the stack, so goes the turtle
