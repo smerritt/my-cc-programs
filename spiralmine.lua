@@ -32,19 +32,24 @@ end
 -- Unload the turtle, but only if necessary
 function maybe_unload()
   if turtle.getItemCount(unload_sentinel_slot) > 0 then
-    turtle.select(unload_chest_slot)
-    turtle.digUp()  -- just in case
-    if not turtle.placeUp() then
-      error("maybe_unload: Error placing unload chest above!")
-    end
-    for slot=first_item_slot,16 do
-      util.unloadUp(slot)
-      sleep(0.2)  -- be gentle to the other side
-    end
-    turtle.select(unload_chest_slot)
-    if not turtle.digUp() then
-      error("maybe_unload: Error retrieving unload chest!")
-    end
+    unload()
+  end
+end
+
+-- unconditional unload
+function unload()
+  turtle.select(unload_chest_slot)
+  turtle.digUp()  -- just in case
+  if not turtle.placeUp() then
+    error("maybe_unload: Error placing unload chest above!")
+  end
+  for slot=first_item_slot,16 do
+    util.unloadUp(slot)
+    sleep(0.2)  -- be gentle to the other side
+  end
+  turtle.select(unload_chest_slot)
+  if not turtle.digUp() then
+    error("maybe_unload: Error retrieving unload chest!")
   end
 end
 
@@ -67,13 +72,22 @@ function advance()
 end
 
 -- main function
-function spiralmine()
-  while true do
+function spiralmine(limit)
+  dug = 0
+  while ((limit <= 0) or (dug < limit)) do
     maybe_unload()
     maybe_refuel()
     maybe_turn()
     advance()
+    dug = dug + 1
   end
+  unload()
 end
 
-spiralmine()
+local args = { ... }
+limit = 0
+if args[1] ~= nil then
+  limit = tonumber(args[1])
+end
+
+spiralmine(limit)
