@@ -29,14 +29,21 @@ function unload()
   -- here's where the refueling would happen
 end
 
+function mineplus()
+  success = shell.run("mineplus")
+  if not success then
+    error("Error running mineplus; bailing out!")
+  end
+end
+
 for i=1,depth-1 do
-  shell.run("mineplus")
+  mineplus()
   unload()
   turtle.dig()
   turtle.forward()
 end
 
-shell.run("mineplus")
+mineplus()
 unload()
 
 for i=1,depth-1 do
