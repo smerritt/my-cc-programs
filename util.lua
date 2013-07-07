@@ -126,60 +126,53 @@ end
 -- requires a bucket in a slot, which defaults to 1.
 --
 -- may change the selected slot.
-function util.ingest(bucket_slot)
+function util._ingest(bucket_slot, detectfn, digfn, placefn)
   bucket_slot = bucket_slot or 1
-  if turtle.detect() then
+  tries = 0
+  max_tries = 25
+  if detectfn() then
     -- solid block: dig it!
     --
     -- I have seen this get stuck when mining underwater, hence the limit
     -- something to do with flowing water blocks, maybe? it's weird.
-    for i=1,10 do
+    while (detectfn() and (tries < max_tries)) do
       -- dig a bunch 
-      if not (turtle.detect() and turtle.dig()) then break end
+      if not digfn() then
+        break
+      end
+      tries = tries + 1
     end
   else
     -- turtle.detect() returns false for air, lava, and water, so try
     -- to eat it with a bucket
     turtle.select(bucket_slot)
-    if turtle.place() then
+    if placefn() then
       -- lava or water
       if not turtle.refuel() then
         -- looks like it was water; put it back (not that I care about
         -- preserving water; it's just that I want the empty bucket back)
-        turtle.place()
+        placefn()
       end
     end
   end
 end
 
--- ingest the block under the turtle. if it's lava, eat it. requires a
--- bucket in a slot, which defaults to 1.
---
--- may change the selected slot.
+function util.ingest(bucket_slot)
+  return util._ingest(bucket_slot, turtle.detect, turtle.dig, turtle.place)
+end
+
+function util.ingestUp(bucket_slot)
+  return util._ingest(bucket_slot, turtle.detectUp, turtle.digUp, turtle.placeUp)
+end
+
 function util.ingestDown(bucket_slot)
-  bucket_slot = bucket_slot or 1
-  if turtle.detectDown() then
-    -- solid block: dig it!
-    turtle.digDown()
-  else
-    -- turtle.detect() returns false for air, lava, and water, so try
-    -- to eat it with a bucket
-    turtle.select(bucket_slot)
-    if turtle.placeDown() then
-      -- lava or water
-      if not turtle.refuel() then
-        -- looks like it was water; put it back
-        turtle.placeDown()
-      end
-    end
-  end
+  return util._ingest(bucket_slot, turtle.detectDown, turtle.digDown, turtle.placeDown)
 end
-
 
 -- find an empty slot
 -- returns slot number
 function util.find_empty_slot()
-  for slot in 1,16 do
+  for slot=1,16 do
     if turtle.getItemCount(slot) == 0 then
       return slot
     end
@@ -190,55 +183,59 @@ end
 -- will block waiting for buckets
 --
 -- requires air above the turtle for chest placement
+-- NB: may change selected slot
 function util.refuel_from_chests(empty_bucket_chest_slot,
-                                 full_bucket_chest_slot,
-                                 empty_slot_for_bucket)
-  -- put down the chest with the full lava buckets
+                                 full_bucket_chest_slot)
+                                 
+  -- place the chest with the full lava buckets above the turtle
   turtle.select(full_bucket_chest_slot)
   if not turtle.placeUp() then
     error("refuel_from_chests: Error placing full-bucket chest above!")
   end
 
-  -- pull a lava bucket into the empty slot
-  if turtle.getItemCount(empty_slot_for_bucket) > 0 then
-    error("refuel_from_chests: Slot " .. tostring(empty_slot_for_bucket) .. " is not empty!")
+  -- place the chest with the empty buckets below the turtle
+  turtle.select(empty_bucket_chest_slot)
+  if not turtle.placeDown() then
+    error("refuel_from_chests: Error placing empty-bucket chest below!")
   end
-  turtle.select(empty_slot_for_bucket)
+
+  -- pull a lava bucket into some empty slot (we just dropped chests,
+  -- so unless we've got multiples of those ender chests, we're okay)
+  bucket_slot = util.find_empty_slot()
+  turtle.select(bucket_slot)
   
-  tries = 0
+  tries = 1
   while not turtle.suckUp() do
     print("Couldn't pull from inventory above; waiting (try " .. 
           tostring(tries) .. ")")
     tries = tries + 1
+    sleep(10.1)
   end
 
-  -- eat the bucket
+  -- eat the lava
   if not turtle.refuel() then
     error("refuel_from_chests: Got a non-fuel item from inventory above? WTF?")
   end
 
-  -- send the empty bucket on its way
-  turtle.select(full_bucket_chest_slot)
-  if not turtle.digUp() then
-    error("refuel_from_chests: Error retrieving full-bucket chest above!")
-  end
-
-  turtle.select(empty_bucket_chest_slot)
-  if not turtle.placeUp() then
-    error("refuel_from_chests: Error placing empty-bucket chest above!")
-  end
-  
-  turtle.select(empty_slot_for_bucket)  -- kind of a misnomer at this point
-  tries = 0
-  while not turtle.dropUp() do
-    print("Couldn't put bucket into inventory above; waiting (try " .. 
+  -- send the empty bucket on its way, allowing for full output buffer
+  tries = 1
+  while not turtle.dropDown() do
+    print("Couldn't drop off empty bucket; waiting (try " ..
           tostring(tries) .. ")")
     tries = tries + 1
+    sleep(9.9)
+  end
+  
+  -- pick up the full-bucket chest
+  turtle.select(full_bucket_chest_slot)
+  if not turtle.digUp() then
+    error("refuel_from_chests: Error retrieving full-bucket chest!")
   end
 
+  -- pick up the empty-bucket chest
   turtle.select(empty_bucket_chest_slot)
-  if not turtle.digUp() then
-    error("refuel_from_chests: Error retrieving empty-bucket chest above!")
+  if not turtle.digDown() then
+    error("refuel_from_chests: Error retrieving empty-bucket chest!")
   end
 end
 

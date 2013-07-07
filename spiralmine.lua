@@ -4,15 +4,16 @@
 --
 -- works best on chunkloaded turtle
 
-unload_chest_slot = 1
-empty_bucket_chest_slot = 2
+bucket_slot = 1
+unload_chest_slot = 2
 lava_bucket_chest_slot = 3
+empty_bucket_chest_slot = 4
 
 -- first slot after reserved slots above
-first_item_slot = 4
+first_item_slot = 5
 
 -- when items get in this slot, unload
-unload_sentinel_slot = 12
+unload_sentinel_slot = 13
 
 -- refuel when fuel is under this amount
 fuel_threshold = 25
@@ -36,9 +37,13 @@ function maybe_unload()
     if not turtle.placeUp() then
       error("maybe_unload: Error placing unload chest above!")
     end
-    for slot in first_item_slot,16 do
+    for slot=first_item_slot,16 do
       util.unloadUp(slot)
       sleep(0.2)  -- be gentle to the other side
+    end
+    turtle.select(unload_chest_slot)
+    if not turtle.digUp() then
+      error("maybe_unload: Error retrieving unload chest!")
     end
   end
 end
@@ -46,25 +51,18 @@ end
 -- Refuel turtle if fuel levels are too low
 function maybe_refuel()
   if turtle.getFuelLevel() < fuel_threshold then
-    turtle.digUp()  -- should be air above, but be robust if not
-    maybe_unload()  -- ensure some empty slot for refueling
+    turtle.digUp()   -- should be air above, but be robust if not
+    turtle.digDown() -- likewise for below
     util.refuel_from_chests(empty_bucket_chest_slot,
-                            full_bucket_chest_slot,
-                            util.find_empty_slot())
+                            full_bucket_chest_slot)
   end
 end
 
 -- Go one forward
 function advance()
-  if turtle.detectUp() then
-    turtle.digUp()
-  end
-  if turtle.detect() then
-    turtle.dig()
-  end
-  if turtle.detectDown() then
-    turtle.digDown()
-  end
+  util.ingestUp(bucket_slot)
+  util.ingest(bucket_slot)
+  util.ingestDown(bucket_slot)
   util.forward()
 end
 
