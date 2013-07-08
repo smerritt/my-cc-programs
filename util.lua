@@ -155,6 +155,7 @@ function util._ingest(bucket_slot, detectfn, digfn, placefn)
       end
     end
   end
+  return true
 end
 
 function util.ingest(bucket_slot)
