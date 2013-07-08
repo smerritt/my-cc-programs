@@ -11,7 +11,14 @@ unload_chest_slot = 2
 first_item_slot = 3
 
 function unload()
-  turtle.digUp()  -- just in case
+  util.ingestUp()  -- just in case
+  sleep(1)  -- give gravel a chance to fall *and* give
+            -- the player a chance to ctrl-t
+  while turtle.detectUp() do
+    util.ingestUp()
+    sleep(1)
+  end
+  
   turtle.select(unload_chest_slot)
   if not turtle.placeUp() then
     error("Failed placing ender chest above me")
