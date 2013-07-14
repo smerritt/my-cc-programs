@@ -1,15 +1,11 @@
 -- mines straight down, comes back up
 
-loadfile("util")()
-
-bucket_slot = 1
-
 function debug(msg)
   print(msg)
 end
 
 function munch()
-  util.ingestDown(bucket_slot)
+  turtle.digDown()
 
   wentDown = turtle.down()
   if not wentDown then
