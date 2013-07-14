@@ -16,10 +16,14 @@ first_item_slot = 5
 unload_sentinel_slot = 13
 
 -- refuel when fuel is under this amount
-fuel_threshold = 25
+fuel_threshold = 1025
 
 
 loadfile("util")()
+
+function debug(msg)
+  print(msg)
+end
 
 function maybe_turn()
   -- turn if we've hit a corner
@@ -56,10 +60,11 @@ end
 -- Refuel turtle if fuel levels are too low
 function maybe_refuel()
   if turtle.getFuelLevel() < fuel_threshold then
+    print("refueling!")
     turtle.digUp()   -- should be air above, but be robust if not
     turtle.digDown() -- likewise for below
     util.refuel_from_chests(empty_bucket_chest_slot,
-                            full_bucket_chest_slot)
+                            lava_bucket_chest_slot)
   end
 end
 
