@@ -1,11 +1,13 @@
 box.lua
 clearup.lua
 craft.lua
+digstairs.lua
 floor.lua
 lavahoover.lua
 lumberjack.lua
 minedown.lua
 mineplus.lua
+placestairs.lua
 sort.lua
 sort1.lua
 sort2.lua
@@ -15,7 +17,6 @@ sort5.lua
 sort6.lua
 sort7.lua
 sort8.lua
-stairs.lua
 stripmine.lua
 spiralmine.lua
 util.lua
