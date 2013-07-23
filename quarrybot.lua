@@ -1,11 +1,11 @@
 -- take a quarry, an energy tesseract, and an unload chest and move it around
 -- to get arbitrarily many resources
--- 
+--
 -- works well at high levels, but should also work underground, like
 -- if you only want levels 20 and below
 --
 -- 99% supports resuming, but that 1% is a bitch to get right
-EMPTY_BUCKET_SLOT = 1
+BUCKET_SLOT = 1
 ENDERCHEST_SLOT = 2
 TESSERACT_SLOT = 3
 ENG_TURTLE_SLOT = 4
@@ -16,10 +16,10 @@ FIRST_ITEM_SLOT = 6
 
 -- if we don't get any items at all for a long time, we might be above
 -- a hole, so move it
-INITIAL_ITEM_TIMEOUT = 600   -- seconds
+INITIAL_ITEM_TIMEOUT = 180   -- seconds
 
 -- after this long since the last item, it's time to pack it in and move
-FINAL_ITEM_TIMEOUT = 60   -- seconds
+FINAL_ITEM_TIMEOUT = 30   -- seconds
 
 -- sometimes, natural cobble generators happen, and we'll stick, so
 -- let's have a cap on the number of items we'll take. if we get more
@@ -40,9 +40,11 @@ STATE_WAITING_FOR_INITIAL_ITEM = 6
 STATE_WAITING_FOR_LAST_ITEM = 7
 STATE_RETRIEVING_ENDERCHEST = 8
 STATE_RETRIEVING_QUARRY = 9
-STATE_RETRIEVING_TESSERACT = 10
-STATE_RETRIEVING_ENG_TURTLE = 11
-STATE_MOVING = 12
+STATE_MOVING_ATOP_TESSERACT = 10
+STATE_MOVING_BEHIND_TESSERACT = 11
+STATE_RETRIEVING_TESSERACT = 12
+STATE_RETRIEVING_ENG_TURTLE = 13
+STATE_MOVING = 14
 
 
 loadfile("util")()
@@ -71,7 +73,7 @@ function write_new_state(new_state)
 end
 
 -- Go from current state to success state if fn returns a truthy
--- value. If fn returns a falsy value and failure_state is given, 
+-- value. If fn returns a falsy value and failure_state is given,
 -- go to failure state.  Otherwise, do nothing.
 function state_transition(fn, success_state, failure_state)
   debug("st fn=" .. tostring(fn) .. " success_state=" .. tostring(success_state) .. " failure_state=" .. tostring(failure_state))
@@ -210,16 +212,17 @@ function wait_for_last_item()
       total_items_moved = total_items_moved + items_moved
       debug("Unloaded " .. tostring(items_moved) .. " items")
     end
-   
+
     sleepytime = math.random(500) / 20.0  -- ticks --> s
     sleep(sleepytime)
     time_since_last_item = time_since_last_item + sleepytime
-  end  
+  end
   return true
 end
 
 
 function retrieve_enderchest()
+  debug("retrieve_enderchest()")
   if turtle.getItemCount(ENDERCHEST_SLOT) == 0 and not turtle.detectUp() then
     error("No enderchest in inventory or above me")
   elseif turtle.detectUp() then
@@ -228,9 +231,10 @@ function retrieve_enderchest()
   end
   return true
 end
-  
+
 
 function retrieve_quarry()
+  debug("retrieve_quarry()")
   if turtle.getItemCount(QUARRY_SLOT) == 0 and not turtle.detectDown() then
     error("No quarry in inventory or above me")
   elseif turtle.detectDown() then
@@ -239,29 +243,27 @@ function retrieve_quarry()
   end
   return true
 end
-  
 
-function move_to_retrieve_tesseract()
-  -- NB: this is where some of that 1%-not-resumable lives
-  if turtle.detectDown() then
-    -- if there's a block directly below, we're above the quarry or
-    -- the tesseract
+
+function move_atop_tesseract()
+  debug("move_atop_tesseract()")
+  if not turtle.detectDown() then
+    -- we're above where the quarry was
     util.back(1)
-    if turtle.detectDown() then
-      -- we were above the quarry and are now above the tesseract
-      util.up(1)
-      return true
-    else
-      -- we were above the tesseract and are now above nothing
-      util.forward(1)
-      util.up(1)
-      return true
-    end
   end
-  -- if we're above nothing, it's probably good
   return true
 end
-    
+
+
+function move_behind_tesseract()
+  debug("move_behind_tesseract()")
+  if turtle.detectDown() then
+    -- we're above the tesseract; go back 1
+    util.back(1)
+  end
+  return true
+end
+
 
 function retrieve_tesseract()
   debug("retrieve_tesseract()")
@@ -270,11 +272,62 @@ function retrieve_tesseract()
     turtle.placeDown()
   end
 
+  debug("turning on other turtle")
+  handle = peripheral.wrap("bottom")
+  if not handle then
+    error("Failed to get handle to other turtle; can't turn it on!")
+  end
+  debug("handle = " .. tostring(handle))
+  handle.turnOn()   -- returns nil no matter what. *sigh*
+
   turtle.select(TESSERACT_SLOT)
   while not turtle.suckDown() do
-    debug(" didn't get tesseract")
-    turtle.sleep(1)
+    debug(" didn't get tesseract; sleeping a second")
+    sleep(1)
   end
+  return true
+end
+
+
+function retrieve_eng_turtle()
+  debug("retrieve_eng_turtle()")
+  if turtle.getItemCount(ENG_TURTLE_SLOT) == 0 and not turtle.detectDown() then
+    error("No eng turtle below me or in inventory!")
+  elseif turtle.detectDown() then
+    turtle.select(ENG_TURTLE_SLOT)
+    return turtle.digDown()
+  end
+  return true
+end
+
+
+-- XXX some duplication with stripmine + spiralmine in this function
+function munch_path()
+  util.ingestUp(BUCKET_SLOT)  -- just in case
+  sleep(1)  -- give gravel a chance to fall *and* give
+            -- the player a chance to ctrl-t
+  while turtle.detectUp() do
+    util.ingestUp(BUCKET_SLOT)
+    sleep(1)
+  end
+
+  util.ingest(BUCKET_SLOT)
+  util.ingestDown(BUCKET_SLOT)
+end
+
+
+function advance()
+  munch_path()
+  util.forward(1)
+end
+
+
+function move_to_next_site()
+  debug("move_to_next_site()")
+  for i=1,3 do   -- XXX should be 11, but keep small for testing
+    advance()
+  end
+  munch_path()   -- make sure quarry site is clear
   return true
 end
 
@@ -311,18 +364,23 @@ function main()
     elseif state == STATE_WAITING_FOR_LAST_ITEM then
       state_transition(wait_for_last_item, STATE_RETRIEVING_ENDERCHEST)
     elseif state == STATE_RETRIEVING_ENDERCHEST then
-      state_transition(retrieve_enderchest, STATE_MOVING_TO_RETRIEVE_TESSERACT)
-    elseif state == STATE_MOVING_TO_RETRIEVE_TESSERACT then
-      state_transition(move_to_retrieve_tesseract, STATE_RETRIEVING_TESSERACT)
+      state_transition(retrieve_enderchest, STATE_RETRIEVING_QUARRY)
+    elseif state == STATE_RETRIEVING_QUARRY then
+      state_transition(retrieve_quarry, STATE_MOVING_ATOP_TESSERACT)
+    elseif state == STATE_MOVING_ATOP_TESSERACT then
+      state_transition(move_atop_tesseract, STATE_MOVING_BEHIND_TESSERACT)
+    elseif state == STATE_MOVING_BEHIND_TESSERACT then
+      state_transition(move_behind_tesseract, STATE_RETRIEVING_TESSERACT)
     elseif state == STATE_RETRIEVING_TESSERACT then
       state_transition(retrieve_tesseract, STATE_RETRIEVING_ENG_TURTLE)
     elseif state == STATE_RETRIEVING_ENG_TURTLE then
-      state_transition(return_from_retrieving_tesseract,
-                       STATE_RETURNING_FROM_RETRIEVING_TESSERACT)
+      state_transition(retrieve_eng_turtle, STATE_MOVING)
+    elseif state == STATE_MOVING then
+      state_transition(move_to_next_site, STATE_PLACING_QUARRY)
     else
       error("Unknown state " .. tostring(state))
     end
-    sleep(0.1)
+    sleep(0.5)
   end
 end
 
