@@ -76,7 +76,6 @@ end
 -- value. If fn returns a falsy value and failure_state is given,
 -- go to failure state.  Otherwise, do nothing.
 function state_transition(fn, success_state, failure_state)
-  debug("st fn=" .. tostring(fn) .. " success_state=" .. tostring(success_state) .. " failure_state=" .. tostring(failure_state))
   if fn() then
     write_new_state(success_state)
     return true
