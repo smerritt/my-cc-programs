@@ -5,6 +5,9 @@ function debug(msg)
 end
 
 function munch()
+  while turtle.suckDown() do
+    -- nothing
+  end
   turtle.digDown()
 
   wentDown = turtle.down()
