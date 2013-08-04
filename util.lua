@@ -47,8 +47,9 @@ end
 
 -- sleep while retrying an action
 -- args: ntimes: number of retries thus far
+-- bounded exponential backoff w/bound of 30s
 function util.retry_sleep(ntimes)
-  duration = math.random(0.1, 0.1 * (2 ^ (ntimes - 1)))
+  duration = math.min(30, math.random(0.1, 0.1 * (2 ^ (ntimes - 1))))
   sleep(duration)
 end
 
@@ -252,12 +253,35 @@ function util.unloadUp(slot)
 
   turtle.select(slot)
   turtle.dropUp()
+  tries = 1
   while turtle.getItemCount(slot) > 0 do
     turtle.dropUp()
     print("Waiting for space in inventory above")
-    sleep(8.1)
+    util.retry_sleep(tries)
+    tries = tries + 1
   end
 end
+
+-- unload items in <slot> into an inventory below the turtle,
+-- will block if inventory is full.
+--
+-- NB: may change selected slot
+function util.unloadDown(slot)
+  if turtle.getItemCount(slot) == 0 then
+    return true
+  end
+
+  turtle.select(slot)
+  turtle.dropDown()
+  tries = 1
+  while turtle.getItemCount(slot) > 0 do
+    turtle.dropDown()
+    print("Waiting for space in inventory below")
+    util.retry_sleep(tries)
+    tries = tries + 1
+  end
+end
+
 
 return util
 
