@@ -27,6 +27,9 @@ FINAL_ITEM_TIMEOUT = 30   -- seconds
 MAX_ITEMS = 9*9*256
 
 -- parasitize quarry output when fuel is under this amount
+--
+-- NB: this probably won't work in the nether, so if you're quarrying
+-- the nether, use a well-fueled turtle
 FUEL_THRESHOLD = 1000
 
 STATEFILE = 'quarrybot-state'
@@ -331,15 +334,18 @@ function move_to_next_site()
 end
 
 
--- utility function: unload slot to enderchest; returns true
--- if any items moved
+-- utility function: unload slot to enderchest or consume for fuel;
+-- returns true if any items moved/consumed, false otherwise
 function _unload_slot_up(slot)
-  turtle.select(slot)
   itemcount = turtle.getItemCount(slot)
-  if itemcount > 0 then
-    util.unloadUp(slot)
+  if itemcount == 0 then
+    return false
+  elseif turtle.getFuelLevel() < FUEL_THRESHOLD then
+    turtle.select(slot)
+    turtle.refuel()       -- may fail; that's okay
   end
-  return itemcount
+  util.unloadUp(slot)   -- NB: this works fine with an empty slot
+  return true
 end
 
 
