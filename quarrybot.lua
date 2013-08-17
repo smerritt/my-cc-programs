@@ -335,17 +335,17 @@ end
 
 
 -- utility function: unload slot to enderchest or consume for fuel;
--- returns true if any items moved/consumed, false otherwise
+-- returns number of items moved/consumed
 function _unload_slot_up(slot)
   itemcount = turtle.getItemCount(slot)
   if itemcount == 0 then
-    return false
+    return 0
   elseif turtle.getFuelLevel() < FUEL_THRESHOLD then
     turtle.select(slot)
     turtle.refuel()       -- may fail; that's okay
   end
   util.unloadUp(slot)   -- NB: this works fine with an empty slot
-  return true
+  return itemcount
 end
 
 
