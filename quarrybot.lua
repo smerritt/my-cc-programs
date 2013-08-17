@@ -326,7 +326,7 @@ end
 
 function move_to_next_site()
   debug("move_to_next_site()")
-  for i=1,3 do   -- XXX should be 11, but keep small for testing
+  for i=1,11 do
     advance()
   end
   munch_path()   -- make sure quarry site is clear
